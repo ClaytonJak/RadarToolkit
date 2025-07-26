@@ -5,8 +5,11 @@ def awgn(X,SNR_dB):
     Y = X
     SNR_lin = np.power(10,SNR_dB/10)
     noise_cov = signal_power(X)/SNR_lin
-
-    return noise_pwr
+    sigma = np.sqrt(noise_cov)
+    for n in range(0,len(Y)):
+        mu = Y[n]
+        Y[n] = mu + np.random.normal(mu,sigma)
+    return Y
 
 def signal_power(X):
     L = len(X)
