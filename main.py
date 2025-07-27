@@ -13,7 +13,7 @@ plt.rcParams["figure.autolayout"] = True
 sample_rate = 5e9 #samples/sec
 
 # generate an array for signal
-X = toolkit.CW_waveform(1,5e-6,sample_rate,1e9)
+X = toolkit.pulsed_waveform(1,5e-3,sample_rate,1e9,100e-6,1e3)
 pwr_X = np.abs(X)
 #spec = np.fft.fft(X)
 
