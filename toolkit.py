@@ -4,20 +4,22 @@ import scipy.constants
 
 # Constants
 c = scipy.constants.c; #m/s, speed of light
+k = scipy.constants.k; #J/K, Boltzmann constant
 
 # Note: do not remove awgn() from the same file as signal_power()
-def awgn(X,SNR_dB):
+def awgn(X,noise_power,sig_power):
     # description - this adds white gaussian noise to a numpy array signal
     # input X is the input numpy array 1xN
-    # input SNR_dB is the desired SNR of the power of X to the power (covariance) of WGN in the output matrix
+    # input is the power of WGN desired in dB
+    # input sig_power is the pulse signal power in dB
     # output Y is numpy array 1xN with additave white gaussian noise
     Y = X.copy()
-    SNR_lin = np.power(10,SNR_dB/10)
-    noise_cov = signal_power(X)/SNR_lin
+    sig_power_lin = np.power(10,sig_power/10)
+    noise_cov = np.power(10,noise_power/10)
     sigma = np.sqrt(noise_cov)
     for n in range(0,len(Y)):
-        mu = Y[n]
-        Y[n] = np.random.normal(mu,sigma)
+        WGN = complex(np.random.normal(0,sigma)) + complex(1j * np.random.normal(0, sigma))
+        Y[n] += WGN
     return Y
 
 def signal_power(X):
@@ -41,7 +43,7 @@ def CW_waveform(amp,t_len,sample_rate,freq):
     for n in range(0,len(X)):
         t = n/sample_rate
         X[n] = amp*np.exp(1j*w_t*t)
-    return X
+    return X,freq,amp
 
 def pulsed_waveform_single(amp,sample_rate,freq,pulse_width,PRF):
     # description - this generates a single pulsed waveform in a 1xN numpy array
@@ -66,7 +68,7 @@ def pulsed_waveform_single(amp,sample_rate,freq,pulse_width,PRF):
             ampl = 0
         X[n] = ampl*np.exp(1j*w_t*t)
     M = X[:marker]
-    return X,M
+    return X,M,freq,amp
 
 def pulsed_waveform_multi(amp,t_len,sample_rate,freq,pulse_width,PRF):
     # description - this generates a specified time sample of a pulsed waveform in a 1xN numpy array
@@ -99,7 +101,7 @@ def pulsed_waveform_multi(amp,t_len,sample_rate,freq,pulse_width,PRF):
         else:
             ampl = 0
         X[n] = ampl*np.exp(1j*w_t*t)
-    return X
+    return X,freq,amp
 
 def chirped_waveform_single(amp,sample_rate,freq,BW,pulse_width,PRF):
     # description - this generates a single chirped waveform in a 1xN numpy array
@@ -127,9 +129,9 @@ def chirped_waveform_single(amp,sample_rate,freq,BW,pulse_width,PRF):
             W_t = w_t
         X[n] = ampl*np.exp(1j*((w_t_lower*t)+(np.pi*(BW/pulse_width)*(np.power(t,2)))))
     M = X[:marker]
-    return X,M
+    return X,M,freq,amp
 
-def return_pulse(truth_range, truth_range_rate,truth_RCS,truth_addl_loss,X,SNR,sample_rate):
+def return_pulse(truth_range, truth_range_rate,truth_RCS,radar_P_t,radar_G,radar_L_s,radar_P_n,X,freq,SNR,sample_rate):
     # description - takes a TX waveform, reduces its power by free space path loss, RCS return, 
     #               and additional desired losses, then applies WGN at a desired SNR to the 
     #               return signal. Doppler shifts the return according to the target rate.
@@ -138,15 +140,32 @@ def return_pulse(truth_range, truth_range_rate,truth_RCS,truth_addl_loss,X,SNR,s
     # input truth_range is the truth range to the target in meters
     # input truth_range_rate is the truth range rate to the target in m/s. Closing neg, opening pos.
     # input truth_RCS is the truth Swerling 0 RCS (in dBsm)
-    # input truth_addl_loss is a place to account for different losses (in dB) not in free-space
+    # input radar_P_t is the transmit power of the radar (in dBW)
+    # input radar_G is the radar antenna gain (in dBi)
+    # input radar_P_n is the radar noise power (in dBW)
+    # input radar_L_s is a place to account for different losses (in dB) not in free-space
     #               path loss (e.g. TX/RX chain, atmospherics, etc). Positive values are losses.
     # input X is the transmitted waveform
     # input SNR is the desired SNR (in dB) of the RX waveform (after losses) to WGN
     # input sample_rate is the sample rate of the TX waveform (will also be applied to RX waveform)
     # output Y is the RX waveform (will likely look like a signal buried in noise)
     Y = X.copy()
+    # append zeros for target range
     t_delay = 2*truth_range/c
     n_delay = t_delay*sample_rate
     delay_array = np.zeros(int(n_delay))
     Y = np.append(delay_array,Y)
+    # calculate the received signal power based on radar range equation
+    wavelength = c/freq
+    num = radar_P_t + (2*radar_G) + 20*np.log10(wavelength) + truth_RCS
+    den = 30*np.log10(4*np.pi) + 40*np.log10(truth_range) + radar_L_s
+    P_r_dB = num - den
+    # scale the waveform by the power
+    power_ratio_dB = radar_P_t - P_r_dB
+    power_ratio_lin = np.power(10,power_ratio_dB/10)
+    amplitude_ratio_lin = np.sqrt(power_ratio_lin)
+    Y = Y/amplitude_ratio_lin
+    # add noise to each return value
+    Y = awgn(Y,radar_P_n,P_r_dB)
+    # add clutter model here
     return Y
