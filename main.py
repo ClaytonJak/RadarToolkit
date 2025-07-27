@@ -7,6 +7,7 @@ import scipy.constants
 # seed random numbers numpy
 np.random.seed(0)
 
+
 # initialize matplotlib parameters
 plt.rcParams["figure.figsize"] = [7.50, 5.00]
 plt.rcParams["figure.autolayout"] = True
