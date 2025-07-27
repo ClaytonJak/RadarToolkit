@@ -145,9 +145,8 @@ def return_pulse(truth_range, truth_range_rate,truth_RCS,truth_addl_loss,X,SNR,s
     # input sample_rate is the sample rate of the TX waveform (will also be applied to RX waveform)
     # output Y is the RX waveform (will likely look like a signal buried in noise)
     Y = X.copy()
-
     t_delay = 2*truth_range/c
     n_delay = t_delay*sample_rate
     delay_array = np.zeros(int(n_delay))
-
+    Y = np.append(delay_array,Y)
     return Y

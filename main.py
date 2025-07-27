@@ -14,16 +14,18 @@ plt.rcParams["figure.autolayout"] = True
 sample_rate = 3e9 #samples/sec
 
 # initialize my target state
-target = {
-    "range" : 1000, #meters
-    "rate" : -100, #m/s, negative closing, positive opening
-    "RCS" : 10, # dBsm, Swerling 0
-    }
+class target:
+    def __init__(self,range,rate,RCS):
+        self.range = 10e3 #meters
+        self.rate = -100 #m/s, negative closing, positive opening
+        self.RCS = 10 # dBsm, Swerling 0
+tgt = target(1000,-100,10)
 
 # generate an array for signal
-X,M = tk.chirped_waveform_single(1,sample_rate,1e9,10e6,100e-6,1e3)
-pwr_X = (np.abs(M))
-spec = 10*np.log10(np.abs(np.fft.fft(M)))
+X,M = tk.chirped_waveform_single(1,sample_rate,1e9,5e6,10e-6,10e3)
+Y = tk.return_pulse(tgt.range,tgt.rate,tgt.RCS,0,X,0,sample_rate)
+pwr_X = (np.abs(Y))
+spec = 10*np.log10(np.abs(np.fft.fft(Y)))
 
 # plot the clean and noisy signals on top of each other
 s = np.array(range(0,len(pwr_X)))
