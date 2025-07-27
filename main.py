@@ -9,19 +9,19 @@ np.random.seed(0)
 plt.rcParams["figure.figsize"] = [7.50, 3.50]
 plt.rcParams["figure.autolayout"] = True
 
-# generate an array for signal
-size_test_sig = 100
-test_sig = np.zeros(size_test_sig)
-test_sig[int(size_test_sig/2)] = 1
+# initialize sample rate
+sample_rate = 5e9 #samples/sec
 
-# add WGN to the signal with a SNR of 6dB
-noisy_sig = toolkit.awgn(test_sig,6)
+# generate an array for signal
+X = toolkit.CW_waveform(1,5e-6,sample_rate,1e9)
+spec = np.fft.fft(X)
 
 # plot the clean and noisy signals on top of each other
-s = range(0,len(noisy_sig))
+#s = range(0,len(noisy_sig))
 fig, axs = plt.subplots()
 axs.set_title("Signal")
-axs.plot(s, test_sig, s, noisy_sig)
+axs.plot(spec,'b')
+#axs.plot(s, noisy_sig,'r')
 axs.set_xlabel("Sample")
 axs.set_ylabel("Amplitude")
 plt.show()
