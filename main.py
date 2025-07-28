@@ -32,17 +32,17 @@ class target:
         self.range = range #meters
         self.rate = rate #m/s, negative closing, positive opening
         self.RCS = RCS # dBsm, Swerling 0
-tgt = target(5e3,-100,10)
+tgt = target(5e3,-1000,10)
 
 # generate an array for signal
-X,M,f,amp = tk.chirped_waveform_single(np.sqrt(rdr.P_t),sample_rate,1e9,5e6,10e-6,10e3)
+X,M,f,amp = tk.pulsed_waveform_single(np.sqrt(rdr.P_t),sample_rate,1e9,10e-6,10e3)
 del amp
 # apply some very light noise to the output (characterize a very high SNR on the TX function)
 X_tx = tk.awgn(X,rdr.P_n,rdr.P_t)
 # get the return pulse
 Y = tk.return_pulse(tgt.range,tgt.rate,tgt.RCS,rdr.P_t,rdr.G,rdr.P_n,rdr.L_s,X_tx,f,0,sample_rate)
-pwr_X = 10*np.log10(np.multiply(X_tx,np.conjugate(X_tx)))
-spec = 10*np.log10(np.abs(np.fft.fft(X_tx)))
+pwr_X = 10*np.log10(np.multiply(Y,np.conjugate(Y)))
+spec = 10*np.log10(np.abs(np.fft.fft(Y)))
 
 # plot the clean and noisy signals on top of each other
 s = np.array(range(0,len(pwr_X)))
