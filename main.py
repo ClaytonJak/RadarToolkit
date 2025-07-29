@@ -35,7 +35,7 @@ class target:
 tgt = target(5e3,-1000,10)
 
 # generate an array for signal
-X,M,f,amp = tk.pulsed_waveform_single(np.sqrt(rdr.P_t),sample_rate,1e9,10e-6,10e3)
+X,M,f,amp = tk.chirped_waveform_single(np.sqrt(rdr.P_t),sample_rate,1e9,10e6,10e-6,10e3)
 del amp
 # apply some very light noise to the output (characterize a very high SNR on the TX function)
 X_tx = tk.awgn(X,rdr.P_n,rdr.P_t)

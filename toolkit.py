@@ -163,8 +163,9 @@ def return_pulse(truth_range, truth_range_rate,truth_RCS,radar_P_t,radar_G,radar
     # apply doppler shift
     #f_d = 2*truth_range_rate / wavelength
     f_d = 10e6
-    for n in range(0,len(Y)):    
-        Y[n] = np.multiply(np.exp(-1j*2*np.pi*f_d*n),Y[n])
+    for n in range(0,len(Y)): 
+        t = n/sample_rate
+        Y[n] = np.multiply(np.exp(-1j*2*np.pi*f_d*t),Y[n])
     # scale the waveform by the power
     power_ratio_dB = radar_P_t - P_r_dB
     power_ratio_lin = np.power(10,power_ratio_dB/10)
