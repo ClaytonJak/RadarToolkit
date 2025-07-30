@@ -19,7 +19,7 @@ np.random.seed(0)
 plt.rcParams["figure.figsize"] = [7.50, 6.00]
 plt.rcParams["figure.autolayout"] = True
 
-# initialize sample rate
+# initialize sample rate ENSURE THIS MEETS NYQUIST SAMPLING CRITERIA 2*f
 sample_rate = 3e9 #samples/sec
 
 # initialize my radar parameters
@@ -31,7 +31,7 @@ class radar:
         self.T_s = T_s # K, system temp
         self.BW_n = BW_n # Hz, system bandwidth tx/rx
         self.P_n = P_n = 10*np.log10(scipy.constants.k*T_s*BW_n) #default noise power, dB
-rdr = radar(10*np.log10(500),20,1,250,100e6)
+rdr = radar(10*np.log10(2000),30,3,300,100e6)
 
 # initialize my target state
 class target:
@@ -39,7 +39,7 @@ class target:
         self.range = range #meters
         self.rate = rate #m/s, negative closing, positive opening
         self.RCS = RCS # dBsm, Swerling 0
-tgt = target(100e3,-1000,10)
+tgt = target(50e3,-1000,6)
 
 # generate an array for signal
 X,M,f,amp = tk.chirped_waveform_single(np.sqrt(rdr.P_t),sample_rate,1e9,10e6,10e-6,10e3)
