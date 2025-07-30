@@ -170,8 +170,8 @@ def return_pulse(truth_range, truth_range_rate,truth_RCS,radar_P_t,radar_G,radar
     den = 30*np.log10(4*np.pi) + 40*np.log10(truth_range) + radar_L_s
     P_r_dB = num - den
     # apply doppler shift and amplitude scaling
-    #f_d = 2*truth_range_rate / wavelength
-    f_d = 10e6
+    f_d = 2*truth_range_rate / wavelength
+    #f_d = 10e6 #used only in test to see a big shift
     for n in range(0,len(Y)): 
         t = n/sample_rate
         Y[n] = np.multiply(np.exp(-1j*2*np.pi*f_d*t),Y[n])

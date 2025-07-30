@@ -15,9 +15,8 @@ import scipy.constants
 # seed random numbers numpy
 np.random.seed(0)
 
-
 # initialize matplotlib parameters
-plt.rcParams["figure.figsize"] = [7.50, 5.00]
+plt.rcParams["figure.figsize"] = [7.50, 6.00]
 plt.rcParams["figure.autolayout"] = True
 
 # initialize sample rate
@@ -32,7 +31,7 @@ class radar:
         self.T_s = T_s # K, system temp
         self.BW_n = BW_n # Hz, system bandwidth tx/rx
         self.P_n = P_n = 10*np.log10(scipy.constants.k*T_s*BW_n) #default noise power, dB
-rdr = radar(10*np.log10(1000),20,1,250,100e6)
+rdr = radar(10*np.log10(500),20,1,250,100e6)
 
 # initialize my target state
 class target:
@@ -40,12 +39,12 @@ class target:
         self.range = range #meters
         self.rate = rate #m/s, negative closing, positive opening
         self.RCS = RCS # dBsm, Swerling 0
-tgt = target(5e3,-1000,10)
+tgt = target(100e3,-1000,10)
 
 # generate an array for signal
 X,M,f,amp = tk.chirped_waveform_single(np.sqrt(rdr.P_t),sample_rate,1e9,10e6,10e-6,10e3)
 del amp
-# apply some very light noise to the output (characterize a very high SNR on the TX function)
+# apply noise to the output
 X_tx = tk.awgn(X,rdr.P_n,rdr.P_t)
 pwr_X = 10*np.log10(np.multiply(X_tx,np.conjugate(X_tx)))
 spec_X = 10*np.log10(np.abs(np.fft.fft(X_tx)))
@@ -54,15 +53,16 @@ Y = tk.return_pulse(tgt.range,tgt.rate,tgt.RCS,rdr.P_t,rdr.G,rdr.L_s,rdr.P_n,X_t
 pwr_Y = 10*np.log10(np.multiply(Y,np.conjugate(Y)))
 spec_Y = 10*np.log10(np.abs(np.fft.fft(Y)))
 # range process the pulse
-fast_time = np.fft.fftshift(X_tx)
+fast_time = np.correlate(Y,M)
+pwr_ft = 10*np.log10(np.multiply(fast_time,np.conjugate(fast_time)))
 
 
 # plot the clean and noisy signals on top of each other
+fig, axs = plt.subplots(3)
 s_X = np.array(range(0,len(pwr_X)))
 s_X = s_X/sample_rate
 s_Y = np.array(range(0,len(pwr_Y)))
 s_Y = s_Y/sample_rate
-fig, axs = plt.subplots(2)
 fig.suptitle('Signal Time and Freq Domain Analysis')
 axs[0].set_title("Signal Power")
 axs[0].plot(
@@ -89,8 +89,20 @@ axs[1].set_ylabel("Power [dB]")
 axs[1].grid(visible=True, which='both',axis='both',color='0.8', linestyle='-', linewidth=1)
 axs[1].xaxis.set_minor_locator(AutoMinorLocator())
 axs[1].yaxis.set_minor_locator(AutoMinorLocator())
-plt.show()
 del s_X,s_Y
+# plot the fast time response
+s_ft = np.array(range(0,len(pwr_ft)))
+s_ft = scipy.constants.c*s_ft/(2*sample_rate)
+axs[2].set_title("Fast Time Response")
+axs[2].plot(
+    s_ft,pwr_ft,'g')
+axs[2].set_xlabel("Range [m]")
+axs[2].set_ylabel("Power [dB]")
+axs[2].grid(visible=True, which='both',axis='both',color='0.8', linestyle='-', linewidth=1)
+axs[2].xaxis.set_minor_locator(AutoMinorLocator())
+axs[2].yaxis.set_minor_locator(AutoMinorLocator())
+plt.show()
+
 
 
 
