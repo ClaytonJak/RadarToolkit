@@ -131,7 +131,7 @@ def chirped_waveform_single(amp,sample_rate,freq,BW,pulse_width,PRF):
     M = X[:marker]
     return X,M,freq,amp
 
-def return_pulse(truth_range, truth_range_rate,truth_RCS,radar_P_t,radar_G,radar_L_s,radar_P_n,X,freq,SNR,sample_rate):
+def return_pulse(truth_range, truth_range_rate,truth_RCS,radar_P_t,radar_G,radar_L_s,radar_P_n,X,freq,pulse_width,sample_rate):
     # description - takes a TX waveform, reduces its power by free space path loss, RCS return, 
     #               and additional desired losses, then applies WGN at a desired SNR to the 
     #               return signal. Doppler shifts the return according to the target rate.
@@ -146,21 +146,22 @@ def return_pulse(truth_range, truth_range_rate,truth_RCS,radar_P_t,radar_G,radar
     # input radar_L_s is a place to account for different losses (in dB) not in free-space
     #               path loss (e.g. TX/RX chain, atmospherics, etc). Positive values are losses.
     # input X is the transmitted waveform
-    # input SNR is the desired SNR (in dB) of the RX waveform (after losses) to WGN
+    # input pulse_width is the pulse width of the TX waveform in seconds
     # input sample_rate is the sample rate of the TX waveform (will also be applied to RX waveform)
     # output Y is the RX waveform (will likely look like a signal buried in noise)
     Y = X.copy()
     # append zeros for target range
     t_delay = 2*truth_range/c
     n_delay = t_delay*sample_rate
-    delay_array = np.zeros(int(n_delay))
+    delay_array = np.zeros(int(n_delay), dtype = 'complex_')
+    delay_array = awgn(delay_array,radar_P_n,0)
     Y = np.append(delay_array,Y)
     # calculate the received signal power based on radar range equation
     wavelength = c/freq
     num = radar_P_t + (2*radar_G) + 20*np.log10(wavelength) + truth_RCS
     den = 30*np.log10(4*np.pi) + 40*np.log10(truth_range) + radar_L_s
     P_r_dB = num - den
-    # apply doppler shift
+    # apply doppler shift and amplitude scaling
     #f_d = 2*truth_range_rate / wavelength
     f_d = 10e6
     for n in range(0,len(Y)): 
@@ -170,8 +171,13 @@ def return_pulse(truth_range, truth_range_rate,truth_RCS,radar_P_t,radar_G,radar
     power_ratio_dB = radar_P_t - P_r_dB
     power_ratio_lin = np.power(10,power_ratio_dB/10)
     amplitude_ratio_lin = np.sqrt(power_ratio_lin)
-    Y = Y/amplitude_ratio_lin
-    # add noise to each return value
-    Y = awgn(Y,radar_P_n,P_r_dB)
+    Y = np.multiply(Y,1/amplitude_ratio_lin)
+    # Apply noise
+    n_start_pulse = int(n_delay)
+    n_end_pulse = int((pulse_width*sample_rate) + n_start_pulse)
+    Y[0:n_start_pulse] = awgn(Y[0:n_start_pulse],radar_P_n,0)
+    Y[n_start_pulse:n_end_pulse] = awgn(Y[n_start_pulse:n_end_pulse],radar_P_n,0)
+    Y[n_end_pulse:len(Y)] = awgn(Y[n_end_pulse:len(Y)],radar_P_n,0)
+    
     # add clutter model here
     return Y
