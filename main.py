@@ -39,17 +39,26 @@ class target:
         self.range = range #meters
         self.rate = rate #m/s, negative closing, positive opening
         self.RCS = RCS # dBsm, Swerling 0
-tgt = target(50e3,-1000,6)
+tgt = target(25e3,-1000,6)
+
+# initialize waveform parameters
+class waveform:
+    def __init__(self,freq,BW,tau,PRF):
+        self.freq = freq # Hz
+        self.BW = BW # Hz
+        self.tau = tau # s
+        self.PRF = PRF # Hz
+chirp = waveform(1e9,10e6,10e-6,10e3)
 
 # generate an array for signal
-X,M,f,amp = tk.chirped_waveform_single(np.sqrt(rdr.P_t),sample_rate,1e9,10e6,10e-6,10e3)
+X,M,f,amp = tk.chirped_waveform_single(np.sqrt(rdr.P_t),sample_rate,chirp.freq,chirp.BW,chirp.tau,chirp.PRF)
 del amp
 # apply noise to the output
 X_tx = tk.awgn(X,rdr.P_n,rdr.P_t)
 pwr_X = 10*np.log10(np.multiply(X_tx,np.conjugate(X_tx)))
 spec_X = 10*np.log10(np.abs(np.fft.fft(X_tx)))
 # get the return pulse
-Y = tk.return_pulse(tgt.range,tgt.rate,tgt.RCS,rdr.P_t,rdr.G,rdr.L_s,rdr.P_n,X_tx,f,10e-6,sample_rate)
+Y = tk.return_pulse(tgt.range,tgt.rate,tgt.RCS,rdr.P_t,rdr.G,rdr.L_s,rdr.P_n,X_tx,f,chirp.tau,sample_rate)
 pwr_Y = 10*np.log10(np.multiply(Y,np.conjugate(Y)))
 spec_Y = 10*np.log10(np.abs(np.fft.fft(Y)))
 # range process the pulse
