@@ -1,3 +1,11 @@
+#################################### UNCLASSIFIED ####################################
+# toolkit.py
+# Clayton Jaksha
+# ALL RIGHTS RESERVED
+# primary function sandbox for radar and EW modeling
+# all work completed on personally owned devices with personally owned or licensed software
+
+
 from pickle import FALSE, TRUE
 import numpy as np
 import scipy.constants
@@ -181,3 +189,11 @@ def return_pulse(truth_range, truth_range_rate,truth_RCS,radar_P_t,radar_G,radar
     
     # add clutter model here
     return Y
+
+
+
+
+
+
+
+#################################### UNCLASSIFIED ####################################

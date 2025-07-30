@@ -1,3 +1,11 @@
+#################################### UNCLASSIFIED ####################################
+# main.py
+# Clayton Jaksha
+# ALL RIGHTS RESERVED
+# main script to conduct radar and EW modeling in a sandbox environment
+# all work completed on personally owned devices with personally owned or licensed software
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import (MultipleLocator, AutoMinorLocator)
@@ -24,7 +32,7 @@ class radar:
         self.T_s = T_s # K, system temp
         self.BW_n = BW_n # Hz, system bandwidth tx/rx
         self.P_n = P_n = 10*np.log10(scipy.constants.k*T_s*BW_n) #default noise power, dB
-rdr = radar(10*np.log10(300),20,1,250,100e6)
+rdr = radar(10*np.log10(1000),20,1,250,100e6)
 
 # initialize my target state
 class target:
@@ -83,3 +91,10 @@ axs[1].xaxis.set_minor_locator(AutoMinorLocator())
 axs[1].yaxis.set_minor_locator(AutoMinorLocator())
 plt.show()
 del s_X,s_Y
+
+
+
+
+
+
+#################################### UNCLASSIFIED ####################################
