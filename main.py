@@ -31,7 +31,7 @@ class radar:
         self.T_s = T_s # K, system temp
         self.BW_n = BW_n # Hz, system bandwidth tx/rx
         self.P_n = P_n = 10*np.log10(scipy.constants.k*T_s*BW_n) #default noise power, dB
-rdr = radar(10*np.log10(2000),30,3,300,100e6)
+rdr = radar(10*np.log10(5000),30,3,300,100e6)
 
 # initialize my target state
 class target:
@@ -85,8 +85,12 @@ for range_bin in range(1,k):
 
 mesh_l,mesh_k = np.meshgrid(np.array(range(0,l)),np.array(range(0,k)))
 
-cs = plt.contourf([mesh_l,mesh_k],ft_fb_dB)
-cs.show()
+print(np.size(ft_fb_dB),np.size(mesh_l),np.size(mesh_k))
+#cs = plt.contourf(ft_fb_dB)
+cs = plt.contourf(np.abs(ft_fb_dB))
+plt.colorbar(cs)
+plt.title('Range-Doppler Plot')
+plt.show()
 
 # # generate an array for signal
 # X,M,f,amp = tk.chirped_waveform_single(np.sqrt(rdr.P_t),sample_rate,chirp.freq,chirp.BW,chirp.tau,chirp.PRF)
