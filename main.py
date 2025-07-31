@@ -66,10 +66,25 @@ for pulse_n in range(1,m):
     # X,M,f,amp = tk.chirped_waveform_single(np.sqrt(rdr.P_t),sample_rate,chirp.freq,chirp.BW,chirp.tau,chirp.PRF)
     # X_tx = tk.awgn(X,rdr.P_n,rdr.P_t)
     # Y = tk.return_pulse(tgt.range,tgt.rate,tgt.RCS,rdr.P_t,rdr.G,rdr.L_s,rdr.P_n,X_tx,f,chirp.tau,sample_rate)
-    fast_time = np.correlate(Y,M)
-    ft_st[:,n] = np.transpose(fast_time)
+    # fast_time = np.correlate(Y,M)
+    ft_st[:,pulse_n] = np.transpose(fast_time)
     #del X,M,f,amp,X_tx,Y,fast_time
 
+doppler = np.fft.fft(ft_st[0,:])
+k = len(doppler)
+ft_fb = np.zeros([l,k],dtype='complex_')
+ft_fb[0,:] = doppler
+del doppler
+for range_bin in range(1,k):
+    doppler = np.fft.fft(ft_st[range_bin])
+    ft_fb[range_bin,:] = doppler
+    del doppler
+ft_fb_dB = 10*np.log10(np.multiply(ft_fb,np.conjugate(ft_fb)))
+
+mesh_l,mesh_k = np.meshgrid(np.array(range(0,l)),np.array(range(0,k)))
+
+cs = plt.contourf([mesh_l,mesh_k],ft_fb_dB)
+cs.show()
 
 # # generate an array for signal
 # X,M,f,amp = tk.chirped_waveform_single(np.sqrt(rdr.P_t),sample_rate,chirp.freq,chirp.BW,chirp.tau,chirp.PRF)
