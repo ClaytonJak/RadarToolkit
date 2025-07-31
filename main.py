@@ -39,7 +39,7 @@ class target:
         self.range = range #meters
         self.rate = rate #m/s, negative closing, positive opening
         self.RCS = RCS # dBsm, Swerling 0
-tgt = target(25e3,-1000,6)
+tgt = target(25e3,-200,6)
 
 # initialize waveform parameters
 class waveform:
@@ -50,49 +50,64 @@ class waveform:
         self.PRF = PRF # Hz
         self.CPI = CPI # s, should be a multiple of PRI
         self.PRI = 1/PRF # s
+        self.wavelength = scipy.constants.c/freq # m
 chirp = waveform(1e9,10e6,10e-6,10e3,100/10e3)
 
-m = int(chirp.CPI/chirp.PRI)
-#m = 5
-X,M,f,amp = tk.chirped_waveform_single(np.sqrt(rdr.P_t),sample_rate,chirp.freq,chirp.BW,chirp.tau,chirp.PRF)
-X_tx = tk.awgn(X,rdr.P_n,rdr.P_t)
-Y = tk.return_pulse(tgt.range,tgt.rate,tgt.RCS,rdr.P_t,rdr.G,rdr.L_s,rdr.P_n,X_tx,f,chirp.tau,sample_rate)
-fast_time = np.correlate(Y,M)
-l = len(fast_time)
-matched_filter = M
-coherent_sum = fast_time
-del X,M,f,amp,X_tx,Y,fast_time
-for pulse_n in range(1,m):
+#m = int(chirp.CPI/chirp.PRI)
+m = 10
+
+print("Generating CPI of return pulses...")
+for i in range(0,m):
     X,M,f,amp = tk.chirped_waveform_single(np.sqrt(rdr.P_t),sample_rate,chirp.freq,chirp.BW,chirp.tau,chirp.PRF)
     X_tx = tk.awgn(X,rdr.P_n,rdr.P_t)
     Y = tk.return_pulse(tgt.range,tgt.rate,tgt.RCS,rdr.P_t,rdr.G,rdr.L_s,rdr.P_n,X_tx,f,chirp.tau,sample_rate)
-    fast_time = np.correlate(Y,M)
-    coherent_sum = np.add(coherent_sum,fast_time)
-    del X,M,f,amp,X_tx,Y,fast_time
+    if i == 0:
+        coherent_sum = Y.copy()
+    else:
+        coherent_sum = np.add(Y,coherent_sum)
+    del X,f,amp,X_tx,Y
+    print(i+1," of ",m," pulses coherently summed.")
+print("Complete with CPI integration.")
+
+print("Beginning filter bank generation...")
+
+#f_d_optial = -2*tgt.rate / chirp.wavelength
+f_d_lower_unambiguous = -chirp.PRF
+f_d_upper_unambiguous = chirp.PRF
+k = 50 #number of doppler bins
+
+i = 0
+for f_d in np.linspace(f_d_lower_unambiguous,f_d_upper_unambiguous,k):
+    i += 1
+    M_doppler_shifted = M.copy()
+    for n in range(0,len(M_doppler_shifted)):
+        t = n/sample_rate
+        M_doppler_shifted[n] = np.multiply(np.exp(-1j*2*np.pi*f_d*t),M_doppler_shifted[n])   
+    print(i," of ",k," matched filters generated at f_d = ",f_d," Hz.")
+    fast_time = np.correlate(coherent_sum,M_doppler_shifted)
+    pwr_ft = 10*np.log10(np.multiply(fast_time,np.conjugate(fast_time)))
+    if i == 1:
+        l = len(fast_time)
+        range_doppler = np.transpose(pwr_ft)
+    else:
+        range_doppler = np.column_stack(range_doppler,np.transpose(pwr_ft))
+    print(i," of ",k," fast-time doppler bins calculated.")
+    del M_doppler_shifted,fast_time,pwr_ft
+del i
+
+mesh_l,mesh_k = np.meshgrid(np.array(range(0,l)),np.array(range(0,k)))
+
+#cs = plt.contourf(ft_fb_dB)
+cs = plt.contourf(np.abs(range_doppler))
+plt.colorbar(cs)
+plt.title('Range-Doppler Plot')
+plt.show()
 
 
 
-# doppler = np.fft.fft(ft_st[0,:]) + complex(np.random.normal(0,1e-30),np.random.normal(0,1e-30))
-# k = len(doppler)
-# ft_fb = np.zeros((l,k),dtype='complex_')
-# ft_fb_dB = np.zeros((l,k),dtype='complex_')
-# ft_fb[0,:] = doppler
-# ft_fb_dB[0,:] = 10*np.log10(np.multiply(doppler,np.conjugate(doppler)))
-# del doppler
-# for range_bin in range(1,k):
-#     doppler = np.fft.fft(ft_st[range_bin]) + complex(np.random.normal(0,1e-30),np.random.normal(0,1e-30))
-#     ft_fb[range_bin,:] = doppler
-#     ft_fb_dB[range_bin,:] = 10*np.log10(np.multiply(doppler,np.conjugate(doppler)))
-#     del doppler
 
-# mesh_l,mesh_k = np.meshgrid(np.array(range(0,l)),np.array(range(0,k)))
 
-# print(np.size(ft_fb_dB),np.size(mesh_l),np.size(mesh_k))
-# #cs = plt.contourf(ft_fb_dB)
-# cs = plt.contourf(np.abs(ft_fb_dB))
-# plt.colorbar(cs)
-# plt.title('Range-Doppler Plot')
-# plt.show()
+
 
 # # generate an array for signal
 # X,M,f,amp = tk.chirped_waveform_single(np.sqrt(rdr.P_t),sample_rate,chirp.freq,chirp.BW,chirp.tau,chirp.PRF)
