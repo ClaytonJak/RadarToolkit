@@ -12,6 +12,10 @@ from matplotlib.ticker import (MultipleLocator, AutoMinorLocator)
 import toolkit as tk
 import scipy.constants
 
+#enable file storing
+from tempfile import TemporaryFile
+outfile = TemporaryFile()
+
 # seed random numbers numpy
 np.random.seed(0)
 
@@ -53,8 +57,8 @@ class waveform:
         self.wavelength = scipy.constants.c/freq # m
 chirp = waveform(1e9,10e6,10e-6,10e3,100/10e3)
 
-#m = int(chirp.CPI/chirp.PRI)
-m = 10
+m = int(chirp.CPI/chirp.PRI)
+#m = 10
 
 print("Generating CPI of return pulses...")
 for i in range(0,m):
@@ -71,22 +75,18 @@ print("Complete with CPI integration.")
 
 print("Beginning filter bank generation...")
 
-#f_d_optial = -2*tgt.rate / chirp.wavelength
+#f_d_optimal = -2*tgt.rate / chirp.wavelength
 f_d_lower_unambiguous = -chirp.PRF
 f_d_upper_unambiguous = chirp.PRF
-k = 20 #number of doppler bins
+k = 100 #number of doppler bins
 
 i = 0
 for f_d in np.linspace(f_d_lower_unambiguous,f_d_upper_unambiguous,k):
     i += 1
-    M_doppler_shifted = M.copy()
     f_c = chirp.freq + f_d
-    M_doppler_shifted = tk.butter_bandpass_filter(M_doppler_shifted,f_c -(chirp.BW/2),f_c + (chirp.BW/2),sample_rate)
-    # for n in range(0,len(M_doppler_shifted)):
-    #     t = n/sample_rate
-    #     M_doppler_shifted[n] = np.multiply(np.exp(-1j*2*np.pi*f_d*t),M_doppler_shifted[n])   
+    coherent_sum_filtered = tk.butter_bandpass_filter(coherent_sum,f_c -(chirp.BW/2),f_c + (chirp.BW/2),sample_rate)
     print(i," of ",k," matched filters generated at f_d = ",f_d," Hz.")
-    fast_time = np.correlate(coherent_sum,M_doppler_shifted)
+    fast_time = np.correlate(coherent_sum_filtered,M)
     pwr_ft = 10*np.log10(np.multiply(fast_time,np.conjugate(fast_time)))
     if i == 1:
         l = len(fast_time)
@@ -94,13 +94,15 @@ for f_d in np.linspace(f_d_lower_unambiguous,f_d_upper_unambiguous,k):
     else:
         range_doppler = np.column_stack((range_doppler,np.transpose(pwr_ft)))
     print(i," of ",k," fast-time doppler bins calculated.")
-    del M_doppler_shifted,fast_time,pwr_ft
+    del coherent_sum_filtered,fast_time,pwr_ft
 del i
+
+np.save(outfile,range_doppler)
 
 mesh_l,mesh_k = np.meshgrid(np.array(range(0,l)),np.array(range(0,k)))
 
 #cs = plt.contourf(ft_fb_dB)
-cs = plt.contourf(np.real(range_doppler))
+cs = plt.contourf(range_doppler)
 plt.colorbar(cs)
 plt.title('Range-Doppler Plot')
 plt.show()
