@@ -74,15 +74,17 @@ print("Beginning filter bank generation...")
 #f_d_optial = -2*tgt.rate / chirp.wavelength
 f_d_lower_unambiguous = -chirp.PRF
 f_d_upper_unambiguous = chirp.PRF
-k = 50 #number of doppler bins
+k = 20 #number of doppler bins
 
 i = 0
 for f_d in np.linspace(f_d_lower_unambiguous,f_d_upper_unambiguous,k):
     i += 1
     M_doppler_shifted = M.copy()
-    for n in range(0,len(M_doppler_shifted)):
-        t = n/sample_rate
-        M_doppler_shifted[n] = np.multiply(np.exp(-1j*2*np.pi*f_d*t),M_doppler_shifted[n])   
+    f_c = chirp.freq + f_d
+    M_doppler_shifted = tk.butter_bandpass_filter(M_doppler_shifted,f_c -(BW/2),f_c + (BW/2),sample_rate)
+    # for n in range(0,len(M_doppler_shifted)):
+    #     t = n/sample_rate
+    #     M_doppler_shifted[n] = np.multiply(np.exp(-1j*2*np.pi*f_d*t),M_doppler_shifted[n])   
     print(i," of ",k," matched filters generated at f_d = ",f_d," Hz.")
     fast_time = np.correlate(coherent_sum,M_doppler_shifted)
     pwr_ft = 10*np.log10(np.multiply(fast_time,np.conjugate(fast_time)))
@@ -90,7 +92,7 @@ for f_d in np.linspace(f_d_lower_unambiguous,f_d_upper_unambiguous,k):
         l = len(fast_time)
         range_doppler = np.transpose(pwr_ft)
     else:
-        range_doppler = np.column_stack(range_doppler,np.transpose(pwr_ft))
+        range_doppler = np.column_stack((range_doppler,np.transpose(pwr_ft)))
     print(i," of ",k," fast-time doppler bins calculated.")
     del M_doppler_shifted,fast_time,pwr_ft
 del i
@@ -98,7 +100,7 @@ del i
 mesh_l,mesh_k = np.meshgrid(np.array(range(0,l)),np.array(range(0,k)))
 
 #cs = plt.contourf(ft_fb_dB)
-cs = plt.contourf(np.abs(range_doppler))
+cs = plt.contourf(np.real(range_doppler))
 plt.colorbar(cs)
 plt.title('Range-Doppler Plot')
 plt.show()

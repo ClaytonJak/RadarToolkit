@@ -9,6 +9,7 @@
 from pickle import FALSE, TRUE
 import numpy as np
 import scipy.constants
+from scipy.signal import butter, lfilter
 
 # Constants
 c = scipy.constants.c; #m/s, speed of light
@@ -191,6 +192,18 @@ def return_pulse(truth_range, truth_range_rate,truth_RCS,radar_P_t,radar_G,radar
     return Y
 
 
+def butter_bandpass(lowcut, highcut, fs, order=5):
+    nyq = 0.5 * fs
+    low = lowcut / nyq
+    high = highcut / nyq
+    b, a = butter(order, [low, high], btype='band')
+    return b, a
+
+
+def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
+    b, a = butter_bandpass(lowcut, highcut, fs, order=order)
+    y = lfilter(b, a, data)
+    return y
 
 
 
