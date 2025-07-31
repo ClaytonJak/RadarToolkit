@@ -81,7 +81,7 @@ for f_d in np.linspace(f_d_lower_unambiguous,f_d_upper_unambiguous,k):
     i += 1
     M_doppler_shifted = M.copy()
     f_c = chirp.freq + f_d
-    M_doppler_shifted = tk.butter_bandpass_filter(M_doppler_shifted,f_c -(BW/2),f_c + (BW/2),sample_rate)
+    M_doppler_shifted = tk.butter_bandpass_filter(M_doppler_shifted,f_c -(chirp.BW/2),f_c + (chirp.BW/2),sample_rate)
     # for n in range(0,len(M_doppler_shifted)):
     #     t = n/sample_rate
     #     M_doppler_shifted[n] = np.multiply(np.exp(-1j*2*np.pi*f_d*t),M_doppler_shifted[n])   
