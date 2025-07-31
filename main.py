@@ -59,7 +59,7 @@ X_tx = tk.awgn(X,rdr.P_n,rdr.P_t)
 Y = tk.return_pulse(tgt.range,tgt.rate,tgt.RCS,rdr.P_t,rdr.G,rdr.L_s,rdr.P_n,X_tx,f,chirp.tau,sample_rate)
 fast_time = np.correlate(Y,M)
 l = len(fast_time)
-ft_st = np.zeros([l,m],dtype='complex_')
+ft_st = np.zeros((l,m),dtype='complex_')
 ft_st[:,0] = np.transpose(fast_time)
 del X,M,f,amp,X_tx,Y#,fast_time
 for pulse_n in range(1,m):
@@ -70,16 +70,18 @@ for pulse_n in range(1,m):
     ft_st[:,pulse_n] = np.transpose(fast_time)
     #del X,M,f,amp,X_tx,Y,fast_time
 
-doppler = np.fft.fft(ft_st[0,:])
+doppler = np.fft.fft(ft_st[0,:]) + complex(np.random.normal(0,1e-30),np.random.normal(0,1e-30))
 k = len(doppler)
-ft_fb = np.zeros([l,k],dtype='complex_')
+ft_fb = np.zeros((l,k),dtype='complex_')
+ft_fb_dB = np.zeros((l,k),dtype='complex_')
 ft_fb[0,:] = doppler
+ft_fb_dB[0,:] = 10*np.log10(np.multiply(doppler,np.conjugate(doppler)))
 del doppler
 for range_bin in range(1,k):
-    doppler = np.fft.fft(ft_st[range_bin])
+    doppler = np.fft.fft(ft_st[range_bin]) + complex(np.random.normal(0,1e-30),np.random.normal(0,1e-30))
     ft_fb[range_bin,:] = doppler
+    ft_fb_dB[range_bin,:] = 10*np.log10(np.multiply(doppler,np.conjugate(doppler)))
     del doppler
-ft_fb_dB = 10*np.log10(np.multiply(ft_fb,np.conjugate(ft_fb)))
 
 mesh_l,mesh_k = np.meshgrid(np.array(range(0,l)),np.array(range(0,k)))
 
