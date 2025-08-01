@@ -21,7 +21,7 @@ plt.rcParams["figure.figsize"] = [7.50, 6.00]
 plt.rcParams["figure.autolayout"] = True
 
 # initialize sample rate ENSURE THIS MEETS NYQUIST SAMPLING CRITERIA 2*f
-sample_rate = 3e9 #samples/sec
+sample_rate = 2.1e9 #samples/sec
 
 # initialize my radar parameters
 class radar:
