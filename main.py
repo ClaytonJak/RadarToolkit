@@ -89,7 +89,6 @@ for f_d in np.linspace(f_d_lower_unambiguous,f_d_upper_unambiguous,k):
     fast_time = np.correlate(coherent_sum_filtered,M_filtered)
     pwr_ft = np.zeros(len(fast_time),dtype="complex_")
     for n in range(0,len(fast_time)):    
-        #pwr_ft[n] = 10*np.log10(np.multiply(fast_time[n],np.conjugate(fast_time[n])))
         pwr_ft[n] = 20*np.log10(np.abs(fast_time[n]))
     if i == 1:
         l = len(fast_time)
