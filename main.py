@@ -55,10 +55,10 @@ class waveform:
         self.CPI = CPI # s, should be a multiple of PRI
         self.PRI = 1/PRF # s
         self.wavelength = scipy.constants.c/freq # m
-chirp = waveform(1e9,10e6,10e-6,10e3,100/10e3)
+chirp = waveform(1e9,10e6,10e-6,5e3,100/10e3)
 
-m = int(chirp.CPI/chirp.PRI)
-#m = 10
+#m = int(chirp.CPI/chirp.PRI)
+m = 30
 
 print("Generating CPI of return pulses...")
 for i in range(0,m):
@@ -78,16 +78,22 @@ print("Beginning filter bank generation...")
 #f_d_optimal = -2*tgt.rate / chirp.wavelength
 f_d_lower_unambiguous = -chirp.PRF
 f_d_upper_unambiguous = chirp.PRF
-k = 100 #number of doppler bins
+k = 30 #number of doppler bins
+doppler_sample_BW = (f_d_upper_unambiguous - f_d_lower_unambiguous)/k
 
 i = 0
 for f_d in np.linspace(f_d_lower_unambiguous,f_d_upper_unambiguous,k):
     i += 1
     f_c = chirp.freq + f_d
-    coherent_sum_filtered = tk.butter_bandpass_filter(coherent_sum,f_c -(chirp.BW/2),f_c + (chirp.BW/2),sample_rate)
-    print(i," of ",k," matched filters generated at f_d = ",f_d," Hz.")
-    fast_time = np.correlate(coherent_sum_filtered,M)
-    pwr_ft = 10*np.log10(np.multiply(fast_time,np.conjugate(fast_time)))
+    M_filtered = M.copy()
+    M_filtered = tk.butter_bandpass_filter(M_filtered,f_c -(doppler_sample_BW/2),f_c + (doppler_sample_BW/2),sample_rate)
+    coherent_sum_filtered = coherent_sum.copy()
+    print(i," of ",k," matched filters generated at f_d = ",f_d," Hz. (Bin from ",f_c -(doppler_sample_BW/2)," Hz to ",f_c + (doppler_sample_BW/2)," Hz)")
+    fast_time = np.correlate(coherent_sum_filtered,M_filtered)
+    pwr_ft = np.zeros(len(fast_time),dtype="complex_")
+    for n in range(0,len(fast_time)):    
+        #pwr_ft[n] = 10*np.log10(np.multiply(fast_time[n],np.conjugate(fast_time[n])))
+        pwr_ft[n] = 20*np.log10(np.abs(fast_time[n]))
     if i == 1:
         l = len(fast_time)
         range_doppler = np.transpose(pwr_ft)
@@ -102,7 +108,7 @@ np.save(outfile,range_doppler)
 mesh_l,mesh_k = np.meshgrid(np.array(range(0,l)),np.array(range(0,k)))
 
 #cs = plt.contourf(ft_fb_dB)
-cs = plt.contourf(range_doppler)
+cs = plt.contourf(np.real(range_doppler))
 plt.colorbar(cs)
 plt.title('Range-Doppler Plot')
 plt.show()
