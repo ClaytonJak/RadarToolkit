@@ -11,10 +11,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import (MultipleLocator, AutoMinorLocator)
 import toolkit as tk
 import scipy.constants
-
-#enable file storing
-from tempfile import TemporaryFile
-outfile = TemporaryFile()
+from scipy.io import savemat
 
 # seed random numbers numpy
 np.random.seed(0)
@@ -58,7 +55,7 @@ class waveform:
 chirp = waveform(1e9,10e6,10e-6,5e3,100/10e3)
 
 #m = int(chirp.CPI/chirp.PRI)
-m = 30
+m = 5
 
 print("Generating CPI of return pulses...")
 for i in range(0,m):
@@ -78,8 +75,8 @@ print("Beginning filter bank generation...")
 #f_d_optimal = -2*tgt.rate / chirp.wavelength
 f_d_lower_unambiguous = -chirp.PRF
 f_d_upper_unambiguous = chirp.PRF
-k = 30 #number of doppler bins
-doppler_sample_BW = (f_d_upper_unambiguous - f_d_lower_unambiguous)/k
+k = 15 #number of doppler bins
+doppler_sample_BW = (f_d_upper_unambiguous - f_d_lower_unambiguous)/(k-1)
 
 i = 0
 for f_d in np.linspace(f_d_lower_unambiguous,f_d_upper_unambiguous,k):
@@ -102,15 +99,28 @@ for f_d in np.linspace(f_d_lower_unambiguous,f_d_upper_unambiguous,k):
     print(i," of ",k," fast-time doppler bins calculated.")
     del coherent_sum_filtered,fast_time,pwr_ft
 del i
+print("Range-Doppler data frame complete.")
 
-np.save(outfile,range_doppler)
+#normalize data and save
+print("Normalizing Data...")
+range_doppler_norm = np.real(range_doppler - np.max(np.real(range_doppler)))
+print("Saving Data...")
+savemat("range_doppler_norm.mat",{'mat':range_doppler_norm})
 
-mesh_l,mesh_k = np.meshgrid(np.array(range(0,l)),np.array(range(0,k)))
+print("Plotting Range-Doppler Map...")
+mesh_l,mesh_k = np.meshgrid(np.array(range(0,l)),np.linspace(f_d_lower_unambiguous,f_d_upper_unambiguous,k))
+mesh_l = scipy.constants.c*mesh_l/(2*sample_rate)
+mesh_l = np.transpose(mesh_l)
+mesh_k = np.transpose(mesh_k)
 
-#cs = plt.contourf(ft_fb_dB)
-cs = plt.contourf(np.real(range_doppler))
-plt.colorbar(cs)
-plt.title('Range-Doppler Plot')
+fig1,ax2 = plt.subplots(layout='constrained')
+cs = plt.contourf(mesh_k,mesh_l,np.real(range_doppler_norm),levels=np.linspace(-12,0,30))
+ax2.set_xlabel('Doppler Freq [Hz]')
+ax2.set_ylabel('Range Bin [m]')
+ax2.set_title('Range-Doppler Plot')
+cb=fig1.colorbar(cs)
+cb.ax.set_ylabel('Normalized Power [dB]')
+plt.savefig('Range_Doppler_Plot.png', bbox_inches='tight')
 plt.show()
 
 
