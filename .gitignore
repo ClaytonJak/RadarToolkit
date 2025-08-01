@@ -3,6 +3,10 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
+# Had issues with these
+*.png
+*.mat
+
 # User-specific files
 *.rsuser
 *.suo
