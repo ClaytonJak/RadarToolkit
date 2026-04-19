@@ -63,15 +63,16 @@ class options_0(gr.top_block, Qt.QWidget):
         ##################################################
         # Variables
         ##################################################
-        self.samp_rate = samp_rate = 250e6
-        self.f_c = f_c = 100000000
-        self.BW_sig = BW_sig = 1000000
+        self.samp_rate = samp_rate = 500000
+        self.norm_amp = norm_amp = 1/.707
+        self.f_c = f_c = 100000
+        self.BW_sig = BW_sig = 25000
 
         ##################################################
         # Blocks
         ##################################################
 
-        self.radar_signal_generator_cw_c_0 = radar.signal_generator_cw_c(100, int(samp_rate), [samp_rate/f_c], 1, "packet_len")
+        self.radar_signal_generator_fmcw_c_0 = radar.signal_generator_fmcw_c(int(samp_rate), (int(samp_rate*100)), (int(samp_rate*10)), 0, f_c, BW_sig, norm_amp, "packet_len")
         self.qtgui_waterfall_sink_x_0 = qtgui.waterfall_sink_c(
             1024, #size
             window.WIN_BLACKMAN_hARRIS, #wintype
@@ -113,7 +114,7 @@ class options_0(gr.top_block, Qt.QWidget):
             f_c, #fc
             samp_rate, #bw
             "", #name
-            1,
+            2,
             None # parent
         )
         self.qtgui_freq_sink_x_0.set_update_time(0.10)
@@ -129,7 +130,7 @@ class options_0(gr.top_block, Qt.QWidget):
 
 
 
-        labels = ['', '', '', '', '',
+        labels = ['Radar Tx', 'Radar Rx', '', '', '',
             '', '', '', '', '']
         widths = [1, 1, 1, 1, 1,
             1, 1, 1, 1, 1]
@@ -138,7 +139,7 @@ class options_0(gr.top_block, Qt.QWidget):
         alphas = [1.0, 1.0, 1.0, 1.0, 1.0,
             1.0, 1.0, 1.0, 1.0, 1.0]
 
-        for i in range(1):
+        for i in range(2):
             if len(labels[i]) == 0:
                 self.qtgui_freq_sink_x_0.set_line_label(i, "Data {0}".format(i))
             else:
@@ -149,19 +150,28 @@ class options_0(gr.top_block, Qt.QWidget):
 
         self._qtgui_freq_sink_x_0_win = sip.wrapinstance(self.qtgui_freq_sink_x_0.qwidget(), Qt.QWidget)
         self.top_layout.addWidget(self._qtgui_freq_sink_x_0_win)
+        self.blocks_multiply_const_xx_0_1 = blocks.multiply_const_cc(0.05, 1)
+        self.blocks_multiply_const_xx_0_0 = blocks.multiply_const_cc(0.5, 1)
         self.blocks_multiply_const_xx_0 = blocks.multiply_const_cc(0.05, 1)
+        self.blocks_add_xx_0_0 = blocks.add_vcc(1)
         self.blocks_add_xx_0 = blocks.add_vcc(1)
-        self.analog_fastnoise_source_x_0 = analog.fastnoise_source_c(analog.GR_GAUSSIAN, 1, 0, 8192)
+        self.analog_fastnoise_source_x_0_0 = analog.fastnoise_source_c(analog.GR_GAUSSIAN, norm_amp, 0, 4212)
+        self.analog_fastnoise_source_x_0 = analog.fastnoise_source_c(analog.GR_GAUSSIAN, norm_amp, 0, 8192)
 
 
         ##################################################
         # Connections
         ##################################################
         self.connect((self.analog_fastnoise_source_x_0, 0), (self.blocks_multiply_const_xx_0, 0))
+        self.connect((self.analog_fastnoise_source_x_0_0, 0), (self.blocks_multiply_const_xx_0_1, 0))
         self.connect((self.blocks_add_xx_0, 0), (self.qtgui_freq_sink_x_0, 0))
         self.connect((self.blocks_add_xx_0, 0), (self.qtgui_waterfall_sink_x_0, 0))
+        self.connect((self.blocks_add_xx_0_0, 0), (self.qtgui_freq_sink_x_0, 1))
         self.connect((self.blocks_multiply_const_xx_0, 0), (self.blocks_add_xx_0, 1))
-        self.connect((self.radar_signal_generator_cw_c_0, 0), (self.blocks_add_xx_0, 0))
+        self.connect((self.blocks_multiply_const_xx_0_0, 0), (self.blocks_add_xx_0_0, 1))
+        self.connect((self.blocks_multiply_const_xx_0_1, 0), (self.blocks_add_xx_0_0, 0))
+        self.connect((self.radar_signal_generator_fmcw_c_0, 0), (self.blocks_add_xx_0, 0))
+        self.connect((self.radar_signal_generator_fmcw_c_0, 0), (self.blocks_multiply_const_xx_0_0, 0))
 
 
     def closeEvent(self, event):
@@ -179,6 +189,14 @@ class options_0(gr.top_block, Qt.QWidget):
         self.samp_rate = samp_rate
         self.qtgui_freq_sink_x_0.set_frequency_range(self.f_c, self.samp_rate)
         self.qtgui_waterfall_sink_x_0.set_frequency_range(self.f_c, self.samp_rate)
+
+    def get_norm_amp(self):
+        return self.norm_amp
+
+    def set_norm_amp(self, norm_amp):
+        self.norm_amp = norm_amp
+        self.analog_fastnoise_source_x_0.set_amplitude(self.norm_amp)
+        self.analog_fastnoise_source_x_0_0.set_amplitude(self.norm_amp)
 
     def get_f_c(self):
         return self.f_c
