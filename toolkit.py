@@ -124,7 +124,7 @@ def chirped_waveform_single(amp,sample_rate,freq,BW,pulse_width,PRF):
     # output M is a 1x(pulse width) array containing only the pulsed portion of the chirped waveform (for matched filter purposes)
     PRI = 1/PRF
     n_samples = int(PRI*sample_rate)
-    X = np.zeros(n_samples, dtype = 'complex_')
+    X = np.zeros(n_samples, dtype = 'complex')
     w_t = 2*np.pi*freq
     w_t_lower = 2*np.pi*(freq-(BW/2))
     marker = 0
@@ -162,7 +162,7 @@ def return_pulse(truth_range, truth_range_rate,truth_RCS,radar_P_t,radar_G,radar
     # append zeros for target range
     t_delay = 2*truth_range/c
     n_delay = t_delay*sample_rate
-    delay_array = np.zeros(int(n_delay), dtype = 'complex_')
+    delay_array = np.zeros(int(n_delay), dtype = 'complex')
     delay_array = awgn(delay_array,radar_P_n,0)
     Y = np.append(delay_array,Y)
     # calculate the received signal power based on radar range equation

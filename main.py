@@ -93,7 +93,7 @@ for f_d in np.linspace(f_d_lower_unambiguous,f_d_upper_unambiguous,k):
     coherent_sum_filtered = coherent_sum.copy()
     print(i," of ",k," matched filters generated at f_d = ",f_d," Hz. (Bin from ",f_c -(doppler_sample_BW/2)," Hz to ",f_c + (doppler_sample_BW/2)," Hz)")
     fast_time = np.correlate(coherent_sum_filtered,M_filtered)
-    pwr_ft = np.zeros(len(fast_time),dtype="complex_")
+    pwr_ft = np.zeros(len(fast_time),dtype="complex")
     for n in range(0,len(fast_time)):    
         pwr_ft[n] = 20*np.log10(np.abs(fast_time[n]))
     if i == 1:
