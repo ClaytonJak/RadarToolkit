@@ -1,5 +1,5 @@
 #################################### UNCLASSIFIED ####################################
-# main.py
+# chirp_rdm.py
 # Clayton Jaksha
 # ALL RIGHTS RESERVED
 # main script to conduct radar and EW modeling in a sandbox environment
