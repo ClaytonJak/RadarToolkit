@@ -87,5 +87,24 @@ ax1[5].set_title('Frequency Domain Signal (FM Signal)')
 ax1[5].set_xlabel('Frequency [Hz]')
 ax1[5].set_ylabel('Power [dB]')
 
+fig2,ax2 = plt.subplots(2,1,figsize=(11, 7))
+
+analytical_signal = signal.hilbert(fm_sig)
+instantaneous_phase = np.unwrap(np.angle(analytical_signal))
+carrier_phase = 2*np.pi*t*f_c
+demod_phase = instantaneous_phase - carrier_phase
+message = np.diff(demod_phase)/(2*np.pi*beta*dt)
+message = np.append(message,0)  # Append a zero to maintain the same length
+
+# Plot the FM signal
+ax2[0].plot(t, analytical_signal,'m')
+ax2[0].set_title('FM Signal')
+ax2[0].set_xlabel('Time [s]')
+ax2[0].set_ylabel('Amplitude')
+
+ax2[1].plot(t, message,'g')
+ax2[1].set_title('FM Signal')
+ax2[1].set_xlabel('Time [s]')
+ax2[1].set_ylabel('Amplitude')
 
 plt.show()
