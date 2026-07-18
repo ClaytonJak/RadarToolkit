@@ -16,14 +16,13 @@ c = scipy.constants.c; #m/s, speed of light
 k = scipy.constants.k; #J/K, Boltzmann constant
 
 # Note: do not remove awgn() from the same file as signal_power()
-def awgn(X,noise_power,sig_power):
+def awgn(X,noise_power):
     # description - this adds white gaussian noise to a numpy array signal
     # input X is the input numpy array 1xN
     # input is the power of WGN desired in dB
     # input sig_power is the pulse signal power in dB
     # output Y is numpy array 1xN with additave white gaussian noise
     Y = X.copy()
-    sig_power_lin = np.power(10,sig_power/10)
     noise_cov = np.power(10,noise_power/10)
     sigma = np.sqrt(noise_cov)
     for n in range(0,len(Y)):
