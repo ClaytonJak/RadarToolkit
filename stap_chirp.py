@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal import chirp, spectrogram
 from scipy.signal.windows import hann
+import toolkit as tk
 
 # Waveform parameters
 pulse_duration = 30e-6  # 30 microseconds
@@ -16,7 +17,7 @@ f1 = bandwidth / 2
 waveform = chirp(t, f0, pulse_duration, f1, method='linear')
 
 # Apply Hann window to reduce spectral leakage
-waveform *= hann(len(waveform))
+#waveform *= hann(len(waveform))
 
 # Create figure with subplots
 fig, axes = plt.subplots(3, 1, figsize=(12, 10))
@@ -37,16 +38,37 @@ axes[1].set_title('Transmit Waveform - Time Domain (Zoomed to 5 µs)')
 axes[1].grid(True)
 
 # Plot 3: STFT spectrogram
-f, t_stft, Sxx = spectrogram(waveform, fs=sample_rate, window='hann', 
-                             nperseg=512, noverlap=256)
+f, t_stft, Sxx = spectrogram(waveform, fs=sample_rate, window='hann',nperseg=512, noverlap=256)
 Sxx_db = 10 * np.log10(Sxx + 1e-10)
 im = axes[2].pcolormesh(t_stft * 1e6, f / 1e6, Sxx_db, shading='gouraud', cmap='viridis')
 axes[2].set_ylabel('Frequency (MHz)')
 axes[2].set_xlabel('Time (µs)')
 axes[2].set_title('STFT Spectrogram')
-axes[2].set_ylim([-60, 60])
+axes[2].set_ylim([00, 60])
 cbar = plt.colorbar(im, ax=axes[2])
 cbar.set_label('Power (dB)')
 
 plt.tight_layout()
+plt.show()
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+
+# --- Example Usage ---
+num_ranges = 200
+num_doppler = 128
+gamma_db = -15.0 # Typical wooded area
+grazing_angle = 5.0 # Degrees
+
+clutter_map = tk.generate_constant_gamma_clutter(num_ranges, num_doppler, gamma_db, grazing_angle)
+
+# Plotting the Range-Doppler Clutter map
+plt.figure(figsize=(8, 6))
+plt.imshow(clutter_map, aspect='auto', cmap='plasma', extent=[-60, 60, num_ranges, 0])
+plt.colorbar(label='Clutter Power (dBsm/m²)')
+plt.title('Constant Gamma Clutter Model (Range-Doppler)')
+plt.ylabel('Range Bins')
+plt.xlabel('Doppler (Hz)')
 plt.show()

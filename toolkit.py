@@ -205,7 +205,39 @@ def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
     return y
 
 
-
+def generate_constant_gamma_clutter(num_ranges, num_doppler, gamma_db, grazing_angle_deg, speckle_dist='rayleigh'):
+    """
+    Generates a constant gamma clutter map in range-Doppler.
+    
+    :param num_ranges: Number of range bins
+    :param num_doppler: Number of Doppler bins
+    :param gamma_db: Gamma coefficient in dB (e.g., -20 for flatland)
+    :param grazing_angle_deg: Grazing angle in degrees
+    :param speckle_dist: Distribution for speckle ('rayleigh', 'exponential')
+    :return: 2D array of clutter returns in dB
+    """
+    # Convert gamma from dB to linear
+    gamma_lin = 10 ** (gamma_db / 10.0)
+    
+    # Calculate Normalized Radar Cross Section (NRCS)
+    grazing_rad = np.radians(grazing_angle_deg)
+    sigma_zero = gamma_lin * np.sin(grazing_rad)
+    
+    # Average power per cell (Linear)
+    mean_power = sigma_zero 
+    
+    # Generate speckle 
+    if speckle_dist == 'exponential':
+        # Exponential distributed amplitude (Swerling I/II equivalent power)
+        speckle = np.random.exponential(scale=mean_power, size=(num_ranges, num_doppler))
+    else:
+        # Rayleigh distributed amplitude
+        speckle = np.random.rayleigh(scale=np.sqrt(mean_power/2), size=(num_ranges, num_doppler))
+    
+    # Convert to Power/Amplitude in dB
+    clutter_db = 10 * np.log10(speckle + 1e-16)
+    
+    return clutter_db
 
 
 #################################### UNCLASSIFIED ####################################
