@@ -20,40 +20,33 @@ waveform = chirp(t, f0, pulse_duration, f1, method='linear')
 #waveform *= hann(len(waveform))
 
 # Create figure with subplots
-fig, axes = plt.subplots(3, 1, figsize=(12, 10))
+fig1, ax1 = plt.subplots(3, 1, figsize=(12, 10))
 
 # Plot 1: Time domain waveform
-axes[0].plot(t * 1e6, waveform)
-axes[0].set_xlabel('Time (µs)')
-axes[0].set_ylabel('Amplitude')
-axes[0].set_title('Transmit Waveform - Time Domain')
-axes[0].grid(True)
+ax1[0].plot(t * 1e6, waveform)
+ax1[0].set_xlabel('Time (µs)')
+ax1[0].set_ylabel('Amplitude')
+ax1[0].set_title('Transmit Waveform - Time Domain')
+ax1[0].grid(True)
 
 # Plot 2: Zoomed time domain (first 5 microseconds)
 zoom_idx = np.where(t <= 5e-6)[0]
-axes[1].plot(t[zoom_idx] * 1e6, waveform[zoom_idx])
-axes[1].set_xlabel('Time (µs)')
-axes[1].set_ylabel('Amplitude')
-axes[1].set_title('Transmit Waveform - Time Domain (Zoomed to 5 µs)')
-axes[1].grid(True)
+ax1[1].plot(t[zoom_idx] * 1e6, waveform[zoom_idx])
+ax1[1].set_xlabel('Time (µs)')
+ax1[1].set_ylabel('Amplitude')
+ax1[1].set_title('Transmit Waveform - Time Domain (Zoomed to 5 µs)')
+ax1[1].grid(True)
 
 # Plot 3: STFT spectrogram
 f, t_stft, Sxx = spectrogram(waveform, fs=sample_rate, window='hann',nperseg=512, noverlap=256)
 Sxx_db = 10 * np.log10(Sxx + 1e-10)
-im = axes[2].pcolormesh(t_stft * 1e6, f / 1e6, Sxx_db, shading='gouraud', cmap='viridis')
-axes[2].set_ylabel('Frequency (MHz)')
-axes[2].set_xlabel('Time (µs)')
-axes[2].set_title('STFT Spectrogram')
-axes[2].set_ylim([00, 60])
-cbar = plt.colorbar(im, ax=axes[2])
+im = ax1[2].pcolormesh(t_stft * 1e6, f / 1e6, Sxx_db, shading='gouraud', cmap='viridis')
+ax1[2].set_ylabel('Frequency (MHz)')
+ax1[2].set_xlabel('Time (µs)')
+ax1[2].set_title('STFT Spectrogram')
+ax1[2].set_ylim([00, 60])
+cbar = plt.colorbar(im, ax=ax1[2])
 cbar.set_label('Power (dB)')
-
-plt.tight_layout()
-plt.show()
-
-import numpy as np
-import matplotlib.pyplot as plt
-
 
 
 # --- Example Usage ---
@@ -65,10 +58,13 @@ grazing_angle = 5.0 # Degrees
 clutter_map = tk.generate_constant_gamma_clutter(num_ranges, num_doppler, gamma_db, grazing_angle)
 
 # Plotting the Range-Doppler Clutter map
-plt.figure(figsize=(8, 6))
-plt.imshow(clutter_map, aspect='auto', cmap='plasma', extent=[-60, 60, num_ranges, 0])
-plt.colorbar(label='Clutter Power (dBsm/m²)')
-plt.title('Constant Gamma Clutter Model (Range-Doppler)')
-plt.ylabel('Range Bins')
-plt.xlabel('Doppler (Hz)')
+fig2,ax2 = plt.subplots(figsize=(8, 6))
+clut = ax2.imshow(clutter_map, aspect='auto', cmap='plasma', extent=[-60, 60, num_ranges, 0])
+fig2.colorbar(clut, label='Clutter Power (dBsm/m²)',ax=ax2)
+ax2.set_title('Constant Gamma Clutter Model (Range-Doppler)')
+ax2.set_ylabel('Range Bins')
+ax2.set_xlabel('Doppler (Hz)')
+
+
+plt.tight_layout()
 plt.show()
